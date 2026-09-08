@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Refeições</title>
+<meta name="theme-color" content="#2c4a34">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Refeições">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIlJlZmVpXHUwMGU3XHUwMGY1ZXMgZSBwcm90ZVx1MDBlZG5hIiwgInNob3J0X25hbWUiOiAiUmVmZWlcdTAwZTdcdTAwZjVlcyIsICJzdGFydF91cmwiOiAiLi8iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiI2ZiZmFmNyIsICJ0aGVtZV9jb2xvciI6ICIjMmM0YTM0In0=">
+<style>
+  :root{
+    --ink:#171512;
+    --soft:#6d675c;
+    --line:#dcd7cc;
+    --rule:#a8a294;
+    --mark:#2c4a34;
+    --marcado:#eef2e9;
+    --paper:#fbfaf7;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+  html{-webkit-text-size-adjust:100%}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:16px;
+    line-height:1.45;
+    padding-bottom:calc(84px + env(safe-area-inset-bottom));
+  }
+
+  h1,h2,h3{margin:0;font-weight:700;letter-spacing:-0.01em}
+
+  /* ---------- topo fixo ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--mark);
+    color:#f4f2ec;
+    padding:calc(10px + env(safe-area-inset-top)) 0 0;
+  }
+  .titulo{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    padding:0 16px 8px;
+  }
+  .titulo h1{font-size:17px}
+  .titulo span{font-size:12px;opacity:.75}
+
+  nav{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding:0 12px 10px;
+    scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none}
+  nav button{
+    flex:0 0 auto;
+    appearance:none;
+    border:1px solid rgba(244,242,236,.35);
+    background:transparent;
+    color:#f4f2ec;
+    font:inherit;
+    font-size:14px;
+    font-weight:600;
+    padding:9px 14px;
+    border-radius:999px;
+    min-height:40px;
+    cursor:pointer;
+  }
+  nav button[aria-selected="true"]{
+    background:#f4f2ec;
+    color:var(--mark);
+    border-color:#f4f2ec;
+  }
+
+  /* ---------- paineis ---------- */
+  main{padding:16px 14px 24px;max-width:820px;margin:0 auto}
+  .painel[hidden]{display:none}
+
+  .cabeca{margin-bottom:12px}
+  .cabeca h2{font-size:20px}
+  .cabeca p{margin:5px 0 0;font-size:13.5px;color:var(--soft)}
+
+  /* ---------- cartoes ---------- */
+  .opcao{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:13px 15px;
+    margin-bottom:11px;
+    cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+  }
+  .opcao[data-escolhida="1"]{
+    border-color:var(--mark);
+    background:var(--marcado);
+    box-shadow:inset 3px 0 0 var(--mark);
+  }
+  .opcao:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+  .topo-opcao{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .topo-opcao h3{font-size:15.5px;flex:1}
+  .kcal{
+    font-size:12.5px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    color:var(--mark);
+    white-space:nowrap;
+  }
+  .marca{
+    width:20px;height:20px;flex:0 0 auto;
+    border:1.5px solid var(--rule);
+    border-radius:50%;
+    position:relative;
+    align-self:center;
+  }
+  .opcao[data-escolhida="1"] .marca{background:var(--mark);border-color:var(--mark)}
+  .opcao[data-escolhida="1"] .marca::after{
+    content:"";
+    position:absolute;left:6px;top:2.5px;
+    width:5px;height:10px;
+    border:solid #fff;border-width:0 2px 2px 0;
+    transform:rotate(45deg);
+  }
+
+  .itens{list-style:none;margin:0;padding:0}
+  .itens li{
+    display:flex;
+    align-items:baseline;
+    font-size:14px;
+    padding:2px 0;
+    color:#2b2822;
+  }
+  .itens .nome{flex:0 1 auto}
+  .itens .pontos{
+    flex:1 1 auto;
+    margin:0 6px;
+    border-bottom:1px dotted var(--line);
+    transform:translateY(-4px);
+    min-width:10px;
+  }
+  .itens .qtd{flex:0 0 auto;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+
+  /* ---------- registro de carga ---------- */
+  .registro{
+    display:flex;align-items:center;gap:8px;
+    margin-top:10px;padding-top:9px;
+    border-top:1px dashed var(--line);
+    font-size:12.5px;color:var(--soft);
+  }
+  .registro label{display:flex;align-items:center;gap:5px}
+  .registro input{
+    width:62px;font:inherit;font-size:14px;font-weight:600;
+    padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+    background:#fff;color:var(--ink);text-align:center;
+    font-variant-numeric:tabular-nums;
+  }
+  .registro input:focus{outline:2px solid var(--mark);outline-offset:1px;border-color:var(--mark)}
+
+  /* ---------- notas e tabelas ---------- */
+  .aviso{
+    background:#fff;
+    border:1px solid var(--line);
+    border-left:4px solid var(--mark);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:11px;
+    font-size:14px;
+    color:var(--soft);
+  }
+  .aviso b{color:var(--ink);font-weight:600}
+
+  .tabela{margin-bottom:22px}
+  .tabela h3{font-size:15px;margin-bottom:7px}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+  th{
+    text-align:left;font-weight:600;font-size:12.5px;color:var(--soft);
+    border-bottom:1px solid var(--rule);padding:0 0 4px;
+  }
+  td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td:not(:first-child),th:not(:first-child){text-align:right;white-space:nowrap;padding-left:8px;font-variant-numeric:tabular-nums}
+  td:last-child,th:last-child{font-weight:600}
+  .legenda{font-size:12.5px;color:var(--soft);margin:7px 0 0}
+
+  /* ---------- barra do total ---------- */
+  .total{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    z-index:30;
+    background:rgba(251,250,247,.96);
+    backdrop-filter:saturate(140%) blur(8px);
+    border-top:1px solid var(--rule);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .total .num{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+  .total .num small{font-size:13px;font-weight:600;color:var(--soft)}
+  .total .rot{font-size:12px;color:var(--soft);line-height:1.2}
+  .total .faixa{flex:1;min-width:0}
+  .barra{height:5px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+  .barra + .barra{margin-top:4px}
+  .barra i{display:block;height:100%;background:var(--mark);width:0;transition:width .2s ease}
+  .barra.prot i{background:#8a6d3b}
+  .total button{
+    appearance:none;border:1px solid var(--rule);background:#fff;color:var(--ink);
+    font:inherit;font-size:13px;font-weight:600;padding:9px 13px;border-radius:9px;
+    min-height:42px;cursor:pointer;flex:0 0 auto;
+  }
+
+  @media (min-width:700px){
+    .listagem{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+    .tabelas{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+  }
+
+  @media print{
+    body{padding:0;background:#fff;font-size:9.4pt}
+    header,.total{display:none}
+    .painel[hidden]{display:block !important}
+    main{max-width:none;padding:0}
+    .painel{break-before:page}
+    .painel:first-of-type{break-before:auto}
+    .listagem{display:block;column-count:3;column-gap:20px}
+    .opcao{break-inside:avoid;border-radius:0;border:0;border-top:1px solid #cfc9bd;padding:8px 0;background:#fff !important;box-shadow:none !important}
+    .tabelas{column-count:2;column-gap:26px}
+    .tabela{break-inside:avoid}
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="titulo">
+    <h1>Refeições</h1>
+    <span>~1.700 kcal · 150 g proteína</span>
+  </div>
+  <nav id="abas" role="tablist">
+    <button role="tab" aria-selected="true" data-alvo="cafe">Café 09:00</button>
+    <button role="tab" aria-selected="false" data-alvo="almoco">Almoço 12:00</button>
+    <button role="tab" aria-selected="false" data-alvo="lanche">Lanche 16:00</button>
+    <button role="tab" aria-selected="false" data-alvo="jantar">Jantar 20:30</button>
+    <button role="tab" aria-selected="false" data-alvo="trocas">Trocas</button>
+    <button role="tab" aria-selected="false" data-alvo="notas">Notas</button>
+  </nav>
+</header>
+
+<main>
+
+<section class="painel" id="cafe">
+  <div class="cabeca">
+    <h2>Café da manhã</h2>
+    <p>Alvo de 330 kcal e 25 g de proteína. Café já contado adoçado, 38 kcal por xícara de 150 ml.</p>
+  </div>
+  <div class="aviso">
+    <b>Versão ajustada.</b> Este cardápio sobe a proteína para perto de 150 g por dia usando ovo e clara,
+    e sobe o total para cerca de 1.700 kcal. A base é o plano da nutricionista, mas o ajuste não é dela.
+    Leve para validar na próxima consulta. Detalhes na aba Notas.
+  </div>
+  <div class="listagem">
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="341" data-prot="27">
+      <div class="topo-opcao"><h3>Crepioca de três ovos</h3><span class="kcal">341 kcal · 27 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Goma de tapioca</span><span class="pontos"></span><span class="qtd">20 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="368" data-prot="26">
+      <div class="topo-opcao"><h3>Cuscuz com ovos e claras</h3><span class="kcal">368 kcal · 26 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Flocão de milho seco</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">3 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="328" data-prot="22">
+      <div class="topo-opcao"><h3>Pão com ovos mexidos</h3><span class="kcal">328 kcal · 22 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Pão integral, 2 fatias</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 1 unidade</span><span class="pontos"></span><span class="qtd">33 g</span></li>
+        <li><span class="nome">Tomate</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="342" data-prot="24">
+      <div class="topo-opcao"><h3>Omelete com mamão</h3><span class="kcal">342 kcal · 24 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Clara de ovo, 1 unidade</span><span class="pontos"></span><span class="qtd">33 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">3 g</span></li>
+        <li><span class="nome">Mamão</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="320" data-prot="33">
+      <div class="topo-opcao"><h3>Tapioca com frango e ovo</h3><span class="kcal">320 kcal · 33 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Goma de tapioca</span><span class="pontos"></span><span class="qtd">25 g</span></li>
+        <li><span class="nome">Frango desfiado</span><span class="pontos"></span><span class="qtd">80 g</span></li>
+        <li><span class="nome">Ovo</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Cenoura ralada</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="cafe" data-kcal="361" data-prot="27">
+      <div class="topo-opcao"><h3>Aveia com banana e ovos</h3><span class="kcal">361 kcal · 27 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Aveia em flocos</span><span class="pontos"></span><span class="qtd">15 g</span></li>
+        <li><span class="nome">Banana</span><span class="pontos"></span><span class="qtd">70 g</span></li>
+        <li><span class="nome">Ovo cozido, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Café adoçado</span><span class="pontos"></span><span class="qtd">150 ml</span></li>
+      </ul>
+    </article>
+
+  </div>
+</section>
+
+<section class="painel" id="almoco" hidden>
+  <div class="cabeca">
+    <h2>Almoço</h2>
+    <p>Alvo de 590 kcal e 55 g de proteína. Sempre 2 tipos de vegetal. Tempero: vinagre de maçã, orégano com limão ou açafrão.</p>
+  </div>
+  <div class="listagem">
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="588" data-prot="63">
+      <div class="topo-opcao"><h3>Frango com arroz, feijão e abóbora</h3><span class="kcal">588 kcal · 63 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Frango grelhado</span><span class="pontos"></span><span class="qtd">170 g</span></li>
+        <li><span class="nome">Arroz cozido</span><span class="pontos"></span><span class="qtd">80 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Abóbora cozida</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+        <li><span class="nome">Abacaxi</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="576" data-prot="56">
+      <div class="topo-opcao"><h3>Carne de boi com macarrão</h3><span class="kcal">576 kcal · 56 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Patinho ou coxão mole</span><span class="pontos"></span><span class="qtd">130 g</span></li>
+        <li><span class="nome">Macarrão cozido</span><span class="pontos"></span><span class="qtd">80 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+        <li><span class="nome">Laranja com bagaço</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="557" data-prot="55">
+      <div class="topo-opcao"><h3>Peixe com arroz e batata</h3><span class="kcal">557 kcal · 55 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Tilápia ou merluza</span><span class="pontos"></span><span class="qtd">220 g</span></li>
+        <li><span class="nome">Arroz cozido</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Batata inglesa cozida</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+        <li><span class="nome">Mexerica</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="613" data-prot="45">
+      <div class="topo-opcao"><h3>Ovos com arroz e batata doce</h3><span class="kcal">613 kcal · 45 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo cozido, 4 unidades</span><span class="pontos"></span><span class="qtd">200 g</span></li>
+        <li><span class="nome">Clara de ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Arroz cozido</span><span class="pontos"></span><span class="qtd">70 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Batata doce cozida</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">3 g</span></li>
+        <li><span class="nome">Abacaxi</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="585" data-prot="51">
+      <div class="topo-opcao"><h3>Carne moída com arroz e abóbora</h3><span class="kcal">585 kcal · 51 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Patinho moído</span><span class="pontos"></span><span class="qtd">140 g</span></li>
+        <li><span class="nome">Arroz cozido</span><span class="pontos"></span><span class="qtd">80 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Abóbora cozida</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+        <li><span class="nome">Laranja com bagaço</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="almoco" data-kcal="587" data-prot="62">
+      <div class="topo-opcao"><h3>Frango com batata doce, sem arroz</h3><span class="kcal">587 kcal · 62 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Frango grelhado</span><span class="pontos"></span><span class="qtd">170 g</span></li>
+        <li><span class="nome">Batata doce cozida</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Feijão cozido</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+        <li><span class="nome">Salada</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+        <li><span class="nome">Abacaxi</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+      </ul>
+    </article>
+
+  </div>
+</section>
+
+<section class="painel" id="lanche" hidden>
+  <div class="cabeca">
+    <h2>Lanche da tarde ou pré-treino</h2>
+    <p>Alvo de 315 kcal e 28 g de proteína. Se for treinar, prefira banana com aveia e ovos ou o wrap.</p>
+  </div>
+  <div class="listagem">
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="307" data-prot="26">
+      <div class="topo-opcao"><h3>Pão com ovos mexidos</h3><span class="kcal">307 kcal · 26 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Pão integral, 2 fatias</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Tomate</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="296" data-prot="32">
+      <div class="topo-opcao"><h3>Crepioca com frango</h3><span class="kcal">296 kcal · 32 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Goma de tapioca</span><span class="pontos"></span><span class="qtd">20 g</span></li>
+        <li><span class="nome">Frango desfiado</span><span class="pontos"></span><span class="qtd">60 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="303" data-prot="26">
+      <div class="topo-opcao"><h3>Cuscuz com dois ovos e claras</h3><span class="kcal">303 kcal · 26 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Flocão de milho seco</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="342" data-prot="27">
+      <div class="topo-opcao"><h3>Banana com aveia e ovos</h3><span class="kcal">342 kcal · 27 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Banana</span><span class="pontos"></span><span class="qtd">110 g</span></li>
+        <li><span class="nome">Aveia em flocos</span><span class="pontos"></span><span class="qtd">10 g</span></li>
+        <li><span class="nome">Ovo cozido, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 3 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="324" data-prot="33">
+      <div class="topo-opcao"><h3>Wrap de frango com ovo</h3><span class="kcal">324 kcal · 33 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Massa de wrap, 1 unidade</span><span class="pontos"></span><span class="qtd">40 g</span></li>
+        <li><span class="nome">Frango desfiado</span><span class="pontos"></span><span class="qtd">70 g</span></li>
+        <li><span class="nome">Ovo cozido</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Alface e tomate</span><span class="pontos"></span><span class="qtd">40 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="lanche" data-kcal="317" data-prot="28">
+      <div class="topo-opcao"><h3>Ovos cozidos com mamão</h3><span class="kcal">317 kcal · 28 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo cozido, 3 unidades</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Mamão</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+      </ul>
+    </article>
+
+  </div>
+</section>
+
+<section class="painel" id="jantar" hidden>
+  <div class="cabeca">
+    <h2>Jantar</h2>
+    <p>Alvo de 460 kcal e 48 g de proteína. As opções de prato completo não levam arroz nem feijão.</p>
+  </div>
+  <div class="listagem">
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="512" data-prot="53">
+      <div class="topo-opcao"><h3>Sanduíche natural com suco</h3><span class="kcal">512 kcal · 53 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Massa de wrap, 1 unidade</span><span class="pontos"></span><span class="qtd">40 g</span></li>
+        <li><span class="nome">Frango desfiado</span><span class="pontos"></span><span class="qtd">130 g</span></li>
+        <li><span class="nome">Ovo cozido</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Abacate amassado</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Alface e tomate</span><span class="pontos"></span><span class="qtd">40 g</span></li>
+        <li><span class="nome">Suco de melancia</span><span class="pontos"></span><span class="qtd">200 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="461" data-prot="38">
+      <div class="topo-opcao"><h3>Omelete com vegetais</h3><span class="kcal">461 kcal · 38 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo, 4 unidades</span><span class="pontos"></span><span class="qtd">200 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Farinha de aveia</span><span class="pontos"></span><span class="qtd">10 g</span></li>
+        <li><span class="nome">Vegetais A e B</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Abacate na salada</span><span class="pontos"></span><span class="qtd">30 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="471" data-prot="62">
+      <div class="topo-opcao"><h3>Frango com abóbora e salada</h3><span class="kcal">471 kcal · 62 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Frango grelhado</span><span class="pontos"></span><span class="qtd">160 g</span></li>
+        <li><span class="nome">Abóbora cozida</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Ovo cozido</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Vegetais A e B</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="434" data-prot="56">
+      <div class="topo-opcao"><h3>Peixe com batata e salada</h3><span class="kcal">434 kcal · 56 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Tilápia ou merluza</span><span class="pontos"></span><span class="qtd">220 g</span></li>
+        <li><span class="nome">Batata inglesa cozida</span><span class="pontos"></span><span class="qtd">170 g</span></li>
+        <li><span class="nome">Ovo cozido</span><span class="pontos"></span><span class="qtd">50 g</span></li>
+        <li><span class="nome">Vegetais A e B</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">5 g</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="446" data-prot="46">
+      <div class="topo-opcao"><h3>Crepioca salgada com suco</h3><span class="kcal">446 kcal · 46 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Goma de tapioca</span><span class="pontos"></span><span class="qtd">20 g</span></li>
+        <li><span class="nome">Frango desfiado</span><span class="pontos"></span><span class="qtd">70 g</span></li>
+        <li><span class="nome">Vegetais A e B</span><span class="pontos"></span><span class="qtd">150 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">3 g</span></li>
+        <li><span class="nome">Suco de acerola</span><span class="pontos"></span><span class="qtd">200 ml</span></li>
+      </ul>
+    </article>
+
+    <article class="opcao" tabindex="0" data-grupo="jantar" data-kcal="442" data-prot="36">
+      <div class="topo-opcao"><h3>Ovos com batata doce e salada</h3><span class="kcal">442 kcal · 36 g P</span><span class="marca"></span></div>
+      <ul class="itens">
+        <li><span class="nome">Ovo cozido, 4 unidades</span><span class="pontos"></span><span class="qtd">200 g</span></li>
+        <li><span class="nome">Clara de ovo, 2 unidades</span><span class="pontos"></span><span class="qtd">66 g</span></li>
+        <li><span class="nome">Batata doce cozida</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Vegetais A e B</span><span class="pontos"></span><span class="qtd">100 g</span></li>
+        <li><span class="nome">Azeite</span><span class="pontos"></span><span class="qtd">3 g</span></li>
+      </ul>
+    </article>
+
+  </div>
+</section>
+
+<section class="painel" id="trocas" hidden>
+  <div class="cabeca">
+    <h2>Tabela de trocas</h2>
+    <p>Troque um item por outro da mesma tabela com kcal parecido. Confira também a coluna de proteína.</p>
+  </div>
+  <div class="tabelas">
+
+  <div class="tabela">
+    <h3>Ovo, a base do ajuste</h3>
+    <table>
+      <tr><th>Item</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Ovo inteiro, 1 unidade</td><td>50 g</td><td>72</td><td>6,7 g</td></tr>
+      <tr><td>Ovo inteiro, 2 unidades</td><td>100 g</td><td>143</td><td>13,3 g</td></tr>
+      <tr><td>Ovo inteiro, 3 unidades</td><td>150 g</td><td>215</td><td>20,0 g</td></tr>
+      <tr><td>Clara, 1 unidade</td><td>33 g</td><td>17</td><td>3,6 g</td></tr>
+      <tr><td>Clara, 3 unidades</td><td>100 g</td><td>52</td><td>10,9 g</td></tr>
+      <tr><td>Clara, 6 unidades</td><td>200 g</td><td>104</td><td>21,8 g</td></tr>
+    </table>
+    <p class="legenda">A clara é o item mais eficiente do cardápio: 21 g de proteína por 104 kcal. Quando faltar proteína no dia, some claras antes de qualquer outra coisa.</p>
+  </div>
+
+  <div class="tabela">
+    <h3>Proteínas, porção do almoço</h3>
+    <table>
+      <tr><th>Cozido ou grelhado</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Peito de frango</td><td>170 g</td><td>281</td><td>54 g</td></tr>
+      <tr><td>Patinho ou coxão mole</td><td>130 g</td><td>285</td><td>47 g</td></tr>
+      <tr><td>Carne moída de patinho</td><td>140 g</td><td>269</td><td>42 g</td></tr>
+      <tr><td>Tilápia, merluza ou pescada</td><td>220 g</td><td>211</td><td>46 g</td></tr>
+      <tr><td>Ovo, 4 unidades + 3 claras</td><td>300 g</td><td>338</td><td>37 g</td></tr>
+      <tr><td>Carne seca dessalgada</td><td>120 g</td><td>252</td><td>31 g</td></tr>
+    </table>
+    <p class="legenda">As porções subiram em relação ao plano original. O peixe é o que mais entrega proteína por caloria.</p>
+  </div>
+
+  <div class="tabela">
+    <h3>Carboidratos, base do prato</h3>
+    <table>
+      <tr><th>Alimento</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Arroz branco cozido</td><td>80 g</td><td>102</td><td>2 g</td></tr>
+      <tr><td>Macarrão cozido</td><td>80 g</td><td>126</td><td>4 g</td></tr>
+      <tr><td>Batata doce cozida</td><td>100 g</td><td>77</td><td>1 g</td></tr>
+      <tr><td>Batata inglesa cozida</td><td>100 g</td><td>52</td><td>1 g</td></tr>
+      <tr><td>Abóbora cabotiá cozida</td><td>100 g</td><td>48</td><td>1 g</td></tr>
+      <tr><td>Feijão cozido</td><td>60 g</td><td>46</td><td>3 g</td></tr>
+    </table>
+  </div>
+
+  <div class="tabela">
+    <h3>Massas do lanche e do café</h3>
+    <table>
+      <tr><th>Alimento</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Pão integral, 1 fatia</td><td>25 g</td><td>62</td><td>2 g</td></tr>
+      <tr><td>Goma de tapioca</td><td>20 g</td><td>54</td><td>0 g</td></tr>
+      <tr><td>Flocão de milho seco</td><td>30 g</td><td>108</td><td>2 g</td></tr>
+      <tr><td>Massa de wrap, 1 unidade</td><td>40 g</td><td>130</td><td>4 g</td></tr>
+      <tr><td>Aveia em flocos</td><td>15 g</td><td>59</td><td>2 g</td></tr>
+    </table>
+    <p class="legenda">Confira o rótulo: muitos pães de forma e massas de wrap levam soro de leite ou leite em pó.</p>
+  </div>
+
+  <div class="tabela">
+    <h3>Gorduras, no lugar dos laticínios</h3>
+    <table>
+      <tr><th>Alimento</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Abacate</td><td>50 g</td><td>48</td><td>1 g</td></tr>
+      <tr><td>Azeite extravirgem</td><td>5 g</td><td>45</td><td>0 g</td></tr>
+      <tr><td>Pasta de amendoim integral</td><td>10 g</td><td>59</td><td>3 g</td></tr>
+      <tr><td>Castanha de caju</td><td>10 g</td><td>57</td><td>2 g</td></tr>
+      <tr><td>Castanha-do-pará</td><td>10 g</td><td>64</td><td>1 g</td></tr>
+      <tr><td>Bebida vegetal sem açúcar</td><td>100 ml</td><td>20</td><td>1 g</td></tr>
+      <tr><td>Mel</td><td>7 g</td><td>22</td><td>0 g</td></tr>
+    </table>
+    <p class="legenda">Gordura é o primeiro item a cortar quando o dia estourar as calorias, porque quase não carrega proteína.</p>
+  </div>
+
+  <div class="tabela">
+    <h3>Café e açúcar</h3>
+    <table>
+      <tr><th>Item</th><th>Medida</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Café coado adoçado</td><td>150 ml</td><td>38</td><td>0 g</td></tr>
+      <tr><td>Café coado sem açúcar</td><td>150 ml</td><td>3</td><td>0 g</td></tr>
+      <tr><td>Açúcar, 1 col. sopa rasa</td><td>12 g</td><td>46</td><td>0 g</td></tr>
+      <tr><td>Café adoçado, 1 litro</td><td>1000 ml</td><td>252</td><td>0 g</td></tr>
+    </table>
+    <p class="legenda">Conta na proporção de 5 colheres de sopa rasas por litro, ou 60 g de açúcar por litro. Trocar para sem açúcar libera 35 kcal por xícara, o equivalente a 2 claras.</p>
+  </div>
+
+  <div class="tabela">
+    <h3>Frutas e sucos</h3>
+    <table>
+      <tr><th>Alimento</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>Melancia ou melão</td><td>150 g</td><td>45</td><td>1 g</td></tr>
+      <tr><td>Mamão</td><td>150 g</td><td>68</td><td>1 g</td></tr>
+      <tr><td>Abacaxi</td><td>150 g</td><td>72</td><td>1 g</td></tr>
+      <tr><td>Laranja ou mexerica</td><td>150 g</td><td>57</td><td>1 g</td></tr>
+      <tr><td>Morango</td><td>150 g</td><td>45</td><td>1 g</td></tr>
+      <tr><td>Banana</td><td>120 g</td><td>118</td><td>1 g</td></tr>
+      <tr><td>Suco de acerola ou limão</td><td>200 ml</td><td>45</td><td>0 g</td></tr>
+      <tr><td>Suco de melancia</td><td>200 ml</td><td>60</td><td>0 g</td></tr>
+    </table>
+  </div>
+
+  <div class="tabela">
+    <h3>Vegetais para a salada</h3>
+    <table>
+      <tr><th>Grupo</th><th>Peso</th><th>kcal</th><th>Proteína</th></tr>
+      <tr><td>A: alface, acelga, agrião, rúcula, couve, espinafre, pepino, tomate, rabanete, chuchu, abobrinha, berinjela, jiló, quiabo, couve-flor, brócolis, repolho, pimentão, vagem</td><td>100 g</td><td>18</td><td>2 g</td></tr>
+      <tr><td>B: cenoura, beterraba, palmito, ervilha fresca, nabo, maxixe</td><td>100 g</td><td>36</td><td>1 g</td></tr>
+    </table>
+    <p class="legenda">A lista oficial está no aplicativo Dietbox. Escolha sempre pelo menos 2 tipos por refeição.</p>
+  </div>
+
+  </div>
+</section>
+
+<section class="painel" id="notas" hidden>
+  <div class="cabeca">
+    <h2>Notas</h2>
+    <p>O que mudou em relação ao plano original e por quê.</p>
+  </div>
+
+  <div class="aviso">
+    <b>Este ajuste não é prescrição.</b> O plano original é da nutricionista Nazaré Albuquerque, CRN 1-13026,
+    datado de 04/09/2026. As mudanças desta versão foram feitas fora do consultório e precisam ser validadas
+    por ela antes de virarem rotina. Nada aqui substitui a avaliação de quem acompanha o seu caso.
+  </div>
+
+  <div class="aviso">
+    <b>O que mudou.</b> A proteína subiu de cerca de 110 g para perto de 150 g por dia. O total calórico subiu
+    de 1.350 a 1.500 kcal para uma faixa de 1.600 a 1.850 kcal, com média em torno de 1.700 kcal.
+    O aumento de proteína foi feito quase todo com ovo inteiro e clara, que é a fonte mais barata disponível.
+  </div>
+
+  <div class="aviso">
+    <b>Por que a proteína subiu.</b> A avaliação de 25/11/2025 mostra 69,96 kg de massa magra.
+    As referências para preservar massa magra durante perda de peso ficam entre 1,8 e 2,2 g de proteína por
+    quilo de massa magra, o que dá algo entre 125 e 155 g por dia. O plano original entregava perto de 110 g.
+  </div>
+
+  <div class="aviso">
+    <b>Por que as calorias subiram.</b> Com 5 treinos de força por semana, o gasto estimado fica na casa
+    das 2.700 a 2.900 kcal por dia. Um plano de 1.400 kcal representa um corte perto da metade. Déficits
+    desse tamanho junto com volume alto de musculação tendem a cobrar em massa magra e em queda de força.
+    A faixa de 1.700 kcal mantém déficit forte com risco menor.
+  </div>
+
+  <div class="aviso">
+    <b>Ovos por dia.</b> Dependendo das opções escolhidas, o dia pode chegar a 8 ou 10 unidades entre inteiros
+    e claras. Isso é seguro para a maioria das pessoas, mas se você tiver colesterol alterado ou qualquer
+    condição hepática ou renal, mencione o número exato para a nutricionista antes de adotar.
+  </div>
+
+  <div class="aviso">
+    <b>Como pesar.</b> Arroz, macarrão, feijão, batata, abóbora e carnes: peso já cozido, no prato.
+    Flocão de milho, aveia, chia, goma de tapioca, pasta de amendoim, castanhas e azeite: peso cru, antes de
+    preparar. Ovo grande = 50 g sem casca. Clara de ovo grande = 33 g. Fatia de pão de forma integral = 25 g.
+  </div>
+
+  <div class="aviso">
+    <b>Sem leite e derivados.</b> Seguem fora queijo, requeijão, manteiga e leite de vaca.
+    Entram abacate, pasta de amendoim, castanhas, azeite e bebida vegetal sem açúcar. Cortar o grupo dos
+    laticínios derruba a oferta de cálcio, e isso não se resolve trocando alimentos no cardápio.
+    Confirme com a nutricionista se algum ajuste é necessário.
+  </div>
+
+  <div class="aviso">
+    <b>Dia de treino.</b> No lanche das 16h, prefira banana com aveia e ovos ou o wrap de frango,
+    que carregam mais carboidrato. Treinando entre 18h e 19h, o jantar das 20:30 cumpre o papel de
+    refeição pós-treino.
+  </div>
+
+  <div class="aviso">
+    <b>De onde vêm os números.</b> Valores da tabela TACO, com variação de cerca de 10% conforme marca e corte.
+    Cada cartão mostra kcal e proteína calculados item a item. A barra de baixo soma o que você marcar,
+    com alvo de 1.700 kcal e 150 g de proteína.
+  </div>
+
+  <div class="aviso">
+    <b>Como usar o contador.</b> Toque no cartão da refeição que você comeu e ele entra na soma do dia.
+    Toque de novo para tirar. A seleção fica salva no aparelho e você limpa quando quiser no botão da barra.
+  </div>
+</section>
+
+</main>
+
+<div class="total">
+  <div class="faixa">
+    <div class="num"><span id="soma">0</span> <small>kcal</small> &nbsp; <span id="prot">0</span> <small>g proteína</small></div>
+    <div class="rot" id="detalhe">Nenhuma refeição marcada</div>
+    <div class="barra"><i id="progresso"></i></div>
+    <div class="barra prot"><i id="progresso-prot"></i></div>
+  </div>
+  <button id="limpar" type="button">Limpar</button>
+</div>
+
+<script>
+
+(function(){
+  var META_KCAL = 1700, META_PROT = 150;
+  var cartoes = Array.prototype.slice.call(document.querySelectorAll('.opcao'));
+  var abas = Array.prototype.slice.call(document.querySelectorAll('#abas button'));
+  var paineis = Array.prototype.slice.call(document.querySelectorAll('.painel'));
+  var elSoma = document.getElementById('soma');
+  var elProt = document.getElementById('prot');
+  var elDet = document.getElementById('detalhe');
+  var elProg = document.getElementById('progresso');
+  var elProgP = document.getElementById('progresso-prot');
+
+  var memoria = {};
+  var deposito = null;
+  try { deposito = window.localStorage; } catch(e) { deposito = null; }
+
+  function hoje(){
+    var d = new Date();
+    return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+  }
+  function ler(){
+    try {
+      if(!deposito) return memoria;
+      var bruto = deposito.getItem('refeicoes');
+      if(!bruto) return {};
+      var dados = JSON.parse(bruto);
+      if(dados.dia !== hoje()) return {};
+      return dados.escolhas || {};
+    } catch(e){ return memoria; }
+  }
+  function gravar(escolhas){
+    memoria = escolhas;
+    try {
+      if(deposito) deposito.setItem('refeicoes', JSON.stringify({dia:hoje(), escolhas:escolhas}));
+    } catch(e){}
+  }
+
+  function chave(c){ return c.dataset.grupo + ':' + c.querySelector('h3').textContent; }
+
+  function atualizar(){
+    var soma = 0, prot = 0, marcadas = [];
+    cartoes.forEach(function(c){
+      if(c.dataset.escolhida === '1'){
+        soma += parseInt(c.dataset.kcal,10);
+        prot += parseInt(c.dataset.prot,10);
+        marcadas.push(c.dataset.grupo);
+      }
+    });
+    elSoma.textContent = soma.toLocaleString('pt-BR');
+    elProt.textContent = prot;
+    elProg.style.width = Math.min(100, Math.round(soma/META_KCAL*100)) + '%';
+    elProgP.style.width = Math.min(100, Math.round(prot/META_PROT*100)) + '%';
+    if(!marcadas.length){
+      elDet.textContent = 'Nenhuma refeição marcada';
+    } else {
+      var nomes = {cafe:'café', almoco:'almoço', lanche:'lanche', jantar:'jantar'};
+      var unicos = marcadas.filter(function(v,i,a){ return a.indexOf(v)===i; }).map(function(g){ return nomes[g]||g; });
+      var faltaP = META_PROT - prot;
+      elDet.textContent = unicos.join(', ') + (faltaP > 0 ? ' · faltam ' + faltaP + ' g de proteína' : ' · proteína do dia batida');
+    }
+  }
+
+  function alternar(c){
+    var escolhas = ler();
+    var k = chave(c);
+    if(c.dataset.escolhida === '1'){
+      c.dataset.escolhida = '0';
+      delete escolhas[k];
+    } else {
+      c.dataset.escolhida = '1';
+      escolhas[k] = 1;
+    }
+    gravar(escolhas);
+    atualizar();
+  }
+
+  cartoes.forEach(function(c){
+    c.dataset.escolhida = '0';
+    c.addEventListener('click', function(){ alternar(c); });
+    c.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); alternar(c); }
+    });
+  });
+
+  (function(){
+    var escolhas = ler();
+    cartoes.forEach(function(c){
+      if(escolhas[chave(c)]) c.dataset.escolhida = '1';
+    });
+    atualizar();
+  })();
+
+  document.getElementById('limpar').addEventListener('click', function(){
+    cartoes.forEach(function(c){ c.dataset.escolhida = '0'; });
+    gravar({});
+    atualizar();
+  });
+
+  abas.forEach(function(b){
+    b.addEventListener('click', function(){
+      abas.forEach(function(o){ o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+      paineis.forEach(function(p){ p.hidden = (p.id !== b.dataset.alvo); });
+      window.scrollTo(0,0);
+    });
+  });
+})();
+
+</script>
+
+</body>
+</html>
